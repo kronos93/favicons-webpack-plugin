@@ -13,18 +13,19 @@ const readFile = denodeify(require('fs').readFile);
 const writeFile = denodeify(require('fs').writeFile);
 const mkdirp = denodeify(require('mkdirp'));
 
-const compareOptions = {compareSize: true};
+const compareOptions = { compareSize: true };
 let outputId = 0;
 const LOGO_PATH = path.resolve(__dirname, 'fixtures/logo.png');
 
 rimraf.sync(path.resolve(__dirname, '../dist'));
 
-function baseWebpackConfig (plugin) {
+function baseWebpackConfig(plugin) {
   return {
     devtool: 'eval',
     entry: path.resolve(__dirname, 'fixtures/entry.js'),
     output: {
-      path: path.resolve(__dirname, '../dist', 'test-' + (outputId++))
+      path: path.resolve(__dirname, '../dist', 'test-' + (outputId++)),
+      filename: 'bundle.js',
     },
     plugins: [].concat(plugin)
   };

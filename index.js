@@ -6,6 +6,7 @@ var fs = require('fs');
 var path = require('path');
 
 function FaviconsWebpackPlugin(options) {
+
   if (typeof options === 'string') {
     options = { logo: options };
   }
@@ -17,25 +18,26 @@ function FaviconsWebpackPlugin(options) {
     statsFilename: 'iconstats-[hash].json',
     persistentCache: true,
     inject: true,
-    background: '#fff'
   }, options);
   this.options.icons = _.extend({
     android: true,
     appleIcon: true,
     appleStartup: true,
-    coast: false,
+    coast: true,
     favicons: true,
     firefox: true,
+    windows: true,
+    yandex: true,
     opengraph: false,
     twitter: false,
-    yandex: false,
-    windows: false
-  }, this.options.icons);
+  }, this.options.config.icons);
+
+
 }
 
 FaviconsWebpackPlugin.prototype.apply = function (compiler) {
   var self = this;
-  if (!self.options.title) {
+  if (!self.options.config.appName) {
     self.options.title = guessAppName(compiler.context);
   }
 
