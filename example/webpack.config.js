@@ -1,9 +1,10 @@
 'use strict';
-var FaviconsWebpackPlugin = require('..');
+var WebAppFaviconsWebpackPlugin = require('..');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var path = require('path');
 
 module.exports = {
+  mode: 'development',
   context: __dirname,
   devtool: 'eval',
   entry: './src/entry.js',
@@ -12,7 +13,7 @@ module.exports = {
     filename: 'bundle.js'
   },
   plugins: [
-    new FaviconsWebpackPlugin({
+    new WebAppFaviconsWebpackPlugin({
       // Your source logo
       logo: './src/logo.png',
       // The prefix for all image files (might be a folder or a name)
@@ -57,7 +58,7 @@ module.exports = {
           android: true,              // Create Android homescreen icon. `boolean` or `{ offset, background, shadow }`
           appleIcon: true,            // Create Apple touch icons. `boolean` or `{ offset, background }`
           appleStartup: true,         // Create Apple startup images. `boolean` or `{ offset, background }`
-          coast: { offset: 25 },      // Create Opera Coast icon with offset 25%. `boolean` or `{ offset, background }`
+          coast: true,                // Create Opera Coast icon with offset 25%. `boolean` or `{ offset, background }`
           favicons: true,             // Create regular favicons. `boolean`
           firefox: true,              // Create Firefox OS icons. `boolean` or `{ offset, background }`
           windows: true,              // Create Windows 8 tile icons. `boolean` or `{ background }`
