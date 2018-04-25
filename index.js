@@ -7,6 +7,7 @@ var path = require('path');
 
 class WebAppFaviconsWebpackPlugin {
   constructor(options) {
+    this.compilationResult;
     if (typeof options === 'string') {
       options = { logo: options };
     }
@@ -23,6 +24,7 @@ class WebAppFaviconsWebpackPlugin {
       inject: true,
       ...options
     };
+
     this.options.icons = {
       android: true,
       appleIcon: true,
@@ -36,66 +38,69 @@ class WebAppFaviconsWebpackPlugin {
       twitter: false,
       ...this.options.config.icons
     };
+
+    if (!this.options.config.appName) {
+      this.options.config.appName = guessAppName(compiler.context);
+    }
   }
 
   apply(compiler) {
-    var self = this;
-    if (this.options.config.appName) {
-      this.options.config.appName = guessAppName(compiler.context);
-    }
     // Generate the favicons (webpack 4 compliant + back compat)
-    var compilationResult;
     (compiler.hooks
-      ? compiler.hooks.make.tapAsync.bind(compiler.hooks.make, 'FaviconsWebpackPluginMake')
+      ? compiler.hooks.make.tapAsync.bind(compiler.hooks.make, 'WebAppFaviconsWebpackMake')
       : compiler.plugin.bind(compiler, 'make'))((compilation, callback) => {
-        childCompiler.compileTemplate(self.options, compiler.context, compilation)
-          .then(function (result) {
-            compilationResult = result;
+        childCompiler.compileTemplate(this.options, compiler.context, compilation)
+          .then(result => {
+            this.compilationResult = result;
             callback();
           })
           .catch(callback);
       });
     // Hook into the html-webpack-plugin processing
     // and add the html
-    if (self.options.inject) {
-      var addFaviconsToHtml = function (htmlPluginData, callback) {
-        if (htmlPluginData.plugin.options.favicons !== false) {
-          htmlPluginData.html = htmlPluginData.html.replace(/(<\/head>)/i, compilationResult.stats.html.join('') + '$&');
-        }
-        callback(null, htmlPluginData);
-      };
+    if (this.options.inject) {
+
       /**
        * Use: if webpack 4 is detected
        */
       if (compiler.hooks) {
         var tapped = 0;
-        compiler.hooks.compilation.tap('FaviconsWebpackPlugin', function (cmpp) {
-          compiler.hooks.compilation.tap('HtmlWebpackPluginHooks', function () {
+        compiler.hooks.compilation.tap('FaviconsWebpackPlugin', (cmpp) => {
+          compiler.hooks.compilation.tap('HtmlWebpackPluginHooks', () => {
             if (!tapped++ && cmpp.hooks.htmlWebpackPluginBeforeHtmlProcessing) {
-              cmpp.hooks.htmlWebpackPluginBeforeHtmlProcessing.tapAsync('favicons-webpack-plugin', addFaviconsToHtml);
+              cmpp.hooks.htmlWebpackPluginBeforeHtmlProcessing.tapAsync('favicons-webpack-plugin', this.addFaviconsToHtml.bind(this));
             }
           });
         });
-        /**
-         * Use: if webpack 3 is detected
-         */
+
       }
+      /**
+       * Use: if webpack 3 is detected
+       */
       else {
-        compiler.plugin('compilation', function (compilation) {
-          compilation.plugin('html-webpack-plugin-before-html-processing', addFaviconsToHtml);
+        compiler.plugin('compilation', (compilation) => {
+          compilation.plugin('html-webpack-plugin-before-html-processing', this.addFaviconsToHtml.bind(this));
         });
       }
     }
     // Remove the stats from the output if they are not required (webpack 4 compliant + back compat)
-    if (!self.options.emitStats) {
+    if (!this.options.emitStats) {
       (compiler.hooks
         ? compiler.hooks.emit.tapAsync.bind(compiler.hooks.emit, 'FaviconsWebpackPluginEmit')
         : compiler.plugin.bind(compiler, 'emit'))((compilation, callback) => {
-          delete compilation.assets[compilationResult.outputName];
+          delete compilation.assets[this.compilationResult.outputName];
           callback();
         });
     }
   }
+
+  addFaviconsToHtml(htmlPluginData, callback) {
+    console.log(this);
+    if (htmlPluginData.plugin.options.favicons !== false) {
+      htmlPluginData.html = htmlPluginData.html.replace(/(<\/head>)/i, this.compilationResult.stats.html.join('') + '$&');
+    }
+    callback(null, htmlPluginData);
+  };
 }
 
 
