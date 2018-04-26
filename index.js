@@ -1,12 +1,12 @@
 'use strict';
-var childCompiler = require('./lib/compiler.js');
-var assert = require('assert');
-var _ = require('lodash');
-var fs = require('fs');
-var path = require('path');
-
+const childCompiler = require('./lib/compiler.js');
+const assert = require('assert');
+const _ = require('lodash');
+const fs = require('fs');
+const path = require('path');
+const PackageMetadata = require('./lib/package-metadata');
 class WebAppFaviconsWebpackPlugin {
-  constructor(options) {
+  constructor(options, packageMetadata = new PackageMetadata())   {
     this.compilationResult;
     if (typeof options === 'string') {
       options = { logo: options };
@@ -40,7 +40,8 @@ class WebAppFaviconsWebpackPlugin {
     };
 
     if (!this.options.config.appName) {
-      this.options.config.appName = guessAppName(compiler.context);
+      packageMetadata.guessMetaData(compiler.context)
+      // this.options.config.appName = ;
     }
   }
 
@@ -95,7 +96,7 @@ class WebAppFaviconsWebpackPlugin {
   }
 
   addFaviconsToHtml(htmlPluginData, callback) {
-    console.log(this);
+    //console.log(this);
     if (htmlPluginData.plugin.options.favicons !== false) {
       htmlPluginData.html = htmlPluginData.html.replace(/(<\/head>)/i, this.compilationResult.stats.html.join('') + '$&');
     }
