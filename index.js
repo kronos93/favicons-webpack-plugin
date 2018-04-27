@@ -6,8 +6,9 @@ const fs = require('fs');
 const path = require('path');
 const PackageMetadata = require('./lib/package-metadata');
 class WebAppFaviconsWebpackPlugin {
-  constructor(options, packageMetadata = new PackageMetadata())   {
+  constructor(options) {
     this.compilationResult;
+    this.packageMetadata = new PackageMetadata();
     if (typeof options === 'string') {
       options = { logo: options };
     }
@@ -39,13 +40,14 @@ class WebAppFaviconsWebpackPlugin {
       ...this.options.config.icons
     };
 
-    if (!this.options.config.appName) {
-      packageMetadata.guessMetaData(compiler.context)
-      // this.options.config.appName = ;
-    }
   }
 
   apply(compiler) {
+    // Default data
+    if (!this.options.config.appName) {
+      let appMinimumData = this.packageMetadata.guessMetaData(compiler.context);
+      Object.assign(this.options.config,appMinimumData);
+    }
     // Generate the favicons (webpack 4 compliant + back compat)
     (compiler.hooks
       ? compiler.hooks.make.tapAsync.bind(compiler.hooks.make, 'WebAppFaviconsWebpackMake')
@@ -66,10 +68,10 @@ class WebAppFaviconsWebpackPlugin {
        */
       if (compiler.hooks) {
         var tapped = 0;
-        compiler.hooks.compilation.tap('FaviconsWebpackPlugin', (cmpp) => {
+        compiler.hooks.compilation.tap('WebAppFaviconsWebpackPlugin', (cmpp) => {
           compiler.hooks.compilation.tap('HtmlWebpackPluginHooks', () => {
             if (!tapped++ && cmpp.hooks.htmlWebpackPluginBeforeHtmlProcessing) {
-              cmpp.hooks.htmlWebpackPluginBeforeHtmlProcessing.tapAsync('favicons-webpack-plugin', this.addFaviconsToHtml.bind(this));
+              cmpp.hooks.htmlWebpackPluginBeforeHtmlProcessing.tapAsync('web-app-favicons-webpack-plugin', this.addFaviconsToHtml.bind(this));
             }
           });
         });
@@ -87,7 +89,7 @@ class WebAppFaviconsWebpackPlugin {
     // Remove the stats from the output if they are not required (webpack 4 compliant + back compat)
     if (!this.options.emitStats) {
       (compiler.hooks
-        ? compiler.hooks.emit.tapAsync.bind(compiler.hooks.emit, 'FaviconsWebpackPluginEmit')
+        ? compiler.hooks.emit.tapAsync.bind(compiler.hooks.emit, 'WebAppFaviconsWebpackPluginEmit')
         : compiler.plugin.bind(compiler, 'emit'))((compilation, callback) => {
           delete compilation.assets[this.compilationResult.outputName];
           callback();
@@ -96,27 +98,11 @@ class WebAppFaviconsWebpackPlugin {
   }
 
   addFaviconsToHtml(htmlPluginData, callback) {
-    //console.log(this);
     if (htmlPluginData.plugin.options.favicons !== false) {
       htmlPluginData.html = htmlPluginData.html.replace(/(<\/head>)/i, this.compilationResult.stats.html.join('') + '$&');
     }
     callback(null, htmlPluginData);
   };
-}
-
-
-/**
- * Tries to guess the name from the package.json - guess - adivinar
- */
-function guessAppName(compilerWorkingDirectory) {
-  var packageJson = path.resolve(compilerWorkingDirectory, 'package.json');
-  if (!fs.existsSync(packageJson)) {
-    packageJson = path.resolve(compilerWorkingDirectory, '../package.json');
-    if (!fs.existsSync(packageJson)) {
-      return 'Webpack App';
-    }
-  }
-  return JSON.parse(fs.readFileSync(packageJson)).name;
 }
 
 module.exports = WebAppFaviconsWebpackPlugin;
