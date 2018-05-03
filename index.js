@@ -12,11 +12,11 @@ class WebAppFaviconsWebpackPlugin {
     if (typeof options === 'string') {
       options = { logo: options };
     }
-    //assert(value, message)
-    //Tests if value is truthy,
-    assert(typeof options === 'object', 'FaviconsWebpackPlugin options are required');
+    // assert(value, message) - asegurar
+    // Tests if value is truthy,
+    assert(typeof options === 'object', 'WebAppFaviconsWebpackPlugin options are required');
     assert(options.logo, 'An input file is required');
-
+    // Get options
     this.options = {
       prefix: 'icons-[hash]/',
       emitStats: false,
@@ -43,10 +43,10 @@ class WebAppFaviconsWebpackPlugin {
   }
 
   apply(compiler) {
-    // Default data
+    // Get default data from package.json
     if (!this.options.config.appName) {
       let appMinimumData = this.packageMetadata.guessMetaData(compiler.context);
-      Object.assign(this.options.config,appMinimumData);
+      Object.assign(this.options.config, appMinimumData);
     }
     // Generate the favicons (webpack 4 compliant + back compat)
     (compiler.hooks
